@@ -1,5 +1,5 @@
 THRESHOLD = (120, 165)
-THRESHOLD_COLOR = (60, 70, -25, -10, -20, -5)
+THRESHOLD_COLOR = (50, 95, -25, -5, -25, -3)
 
 BINARY_VISIBLE = False
 
@@ -25,15 +25,17 @@ uart = pyb.UART(3,9600,timeout_char=1000)
 uart.init(9600,bits=8,parity = None, stop=1, timeout_char=1000)
 count = 0
 task = 1
+gostr = True
 
 while(True):
     clock.tick()
-    img = sensor.snapshot()
+    #img = sensor.snapshot()
     #img = sensor.snapshot().binary([THRESHOLD]) if BINARY_VISIBLE else sensor.snapshot()
-    # img = sensor.snapshot().binary([THRESHOLD_COLOR]) if BINARY_VISIBLE else sensor.snapshot()
+    img = sensor.snapshot().binary([THRESHOLD_COLOR]) if BINARY_VISIBLE else sensor.snapshot()
 
     #line = img.get_regression([(255, 255) if BINARY_VISIBLE else THRESHOLD], False, (0, 0 , 160, 25))
-    line = img.get_regression([(255, 255) if BINARY_VISIBLE else THRESHOLD_COLOR], False, (0, 0 , 160, 25))
+    line = img.get_regression([(100, 100, 0, 0, 0, 0) if BINARY_VISIBLE else THRESHOLD_COLOR],  \
+        False, (0, 0 , 160, 25), robust = True)
 
     find = False
     for tag in img.find_apriltags(fx=f_x, fy=f_y, cx=c_x, cy=c_y): # defaults to TAG36H11
@@ -47,54 +49,80 @@ while(True):
         # Translation units are unknown. Rotation units are in degrees.
         #print("Tx: %f, Ty %f, Tz %f, Rx %f, Ry %f, Rz %f" % print_args)
         #uart.write(("Tx: %f, Ty %f, Tz %f, Rx %f, Ry %f, Rz %f" % print_args).encode())
-        dist = math.sqrt(pow(tag.y_translation(), 2) + pow(tag.z_translation(), 2)) * 2.52
-        #print("dist = %f" %(dist))
+        dist = math.sqrt(pow(tag.y_translation(), 2) + pow(tag.z_translation(), 2)) * 5
+        print("dist = %f" %(dist))
         off_axis = tag.cx()- 72
-        #print ("cx = %f, c_y = %f, off_axis = %f" %(tag.cx(), tag.cy(), off_axis))
+        print ("cx = %f, c_y = %f, off_axis = %f" %(tag.cx(), tag.cy(), off_axis))
+        if (tag.id() == 0):
+            if (dist < 20) :
+                uart.write(("/stop/run \r\n").encode())
+                time.sleep(1)
+                uart.write (("/rotate/run 50 \r\n").encode())
+                time.sleep(1.4)
+                uart.write (("/goStraight/run 60 \r\n").encode())
+                time.sleep(1)
+            else :
+                print ("go stright9")
+                uart.write (("/goStraight/run 60 \r\n").encode())
+        if (tag.id() == 1):
+            if (dist < 25) :
+                uart.write(("/stop/run \r\n").encode())
+                time.sleep(1)
+                uart.write (("/rotate/run -45 \r\n").encode())
+                time.sleep(1)
+                uart.write (("/goStraight/run 60 \r\n").encode())
+                time.sleep(5)
+            else :
+                print ("go stright9")
+                uart.write (("/goStraight/run 60 \r\n").encode())
         if (tag.id() == 2):
             if (degrees(tag.y_rotation()) > 10 and degrees(tag.y_rotation()) < 180) :
                 count = 0
                 if (abs(off_axis) < 15) :
                     print ("turn right1")
-                    uart.write (("/turn/run -50 \r\n").encode())
+                    uart.write (("/rotate/run -30 \r\n").encode())
                 elif (off_axis < -50) :
                     print ("turn right7")
-                    uart.write (("/turn/run -50 \r\n").encode())
+                    uart.write (("/rotate/run -30 \r\n").encode())
                 elif (off_axis > 70) :
                     print ("turn left8")
-                    uart.write (("/turn/run 70 \r\n").encode())
+                    uart.write (("/rotate/run 30 \r\n").encode())
                 else :
                     print ("go stright3")
                     uart.write (("/goStraight/run 70 \r\n").encode())
             elif (degrees(tag.y_rotation()) < 350 and degrees(tag.y_rotation()) > 180) :
                 if (abs(off_axis) < 15) :
                     print ("turn left4")
-                    uart.write (("/turn/run 50 \r\n").encode())
+                    uart.write (("/rotate/run 30 \r\n").encode())
                 elif (off_axis < -70) :
                     print ("turn right7")
-                    uart.write (("/turn/run -50 \r\n").encode())
+                    uart.write (("/rotate/run -30 \r\n").encode())
                 elif (off_axis > 50) :
                     print ("turn left8")
-                    uart.write (("/turn/run 50 \r\n").encode())
+                    uart.write (("/rotate/run 30 \r\n").encode())
                 else :
                     print ("go stright6")
                     uart.write (("/goStraight/run 70 \r\n").encode())
             else :
-                if (off_axis < -15) :
+                if (off_axis < -25) :
                     print ("turn right7")
-                    uart.write (("/turn/run -50 \r\n").encode())
-                elif (off_axis > 15) :
+                    uart.write (("/rotate/run -30 \r\n").encode())
+                elif (off_axis > 25) :
                     print ("turn left8")
-                    uart.write (("/turn/run 50 \r\n").encode())
+                    uart.write (("/rotate/run 30 \r\n").encode())
                 else :
-                    if (dist < 20) :
+                    if (dist < 25) :
                         # print ("stop10")
                         # uart.write (("/stop/run \n").encode())
                         print("apriltag calibrate success")
                         print("turn right")
-                        uart.write(("/turn/run -50 \r\n").encode())
-                        time.sleep(1)
+                        uart.write(("z \r\n").encode())
+                        uart.write(("/rotate/run -40 \r\n").encode())
+                        time.sleep(1.05)
                         uart.write(("/stop/run \r\n").encode())
+                        time.sleep(0.5)
+                        uart.write (("/goStraight/run 60 \r\n").encode())
+                        time.sleep(1)
                     else :
                         print ("go stright9")
                         uart.write (("/goStraight/run 70 \r\n").encode())
@@ -108,45 +136,63 @@ while(True):
             off_axis = - abs(line.rho()) / math.cos(math.radians(line.theta())) - 80
         else :
             off_axis = abs(line.rho()) / math.cos(math.radians(line.theta())) - 80
-        #print (" off-axis = %f" % (off_axis))
-        if (abs(off_axis) < 30) :
-            print("go straight1")
-            uart.write(("/goStraight/run 60 \r\n").encode())
-        elif (off_axis > 30) :
-            if (line.theta() > 50 and line.theta() < 90) :
-                print("go straight2")
-                uart.write(("/goStraight/run 60 \r\n").encode())
-                time.sleep(0.5)
+        print (" off-axis = %f" % (off_axis))
+        if (abs(off_axis) < 40) :
+            if (line.theta() > 40 and line.theta() < 90) :
                 print("turn right2")
-                uart.write(("/turn/run -50 \r\n").encode())
-            elif (line.theta() < 130 and line.theta() > 90) :
-                print("go straight3")
-                uart.write(("/goStraight/run 60 \r\n").encode())
-                time.sleep(1)
+                uart.write(("/turn/run 80 -0.5 \r\n").encode())
+            elif (line.theta() < 140 and line.theta() > 90) :
                 print("turn left3")
-                uart.write(("/turn/run 50 \r\n").encode())
+                uart.write(("/turn/run 80 0.35\r\n").encode())
+            else :
+                print("go straight1")
+                uart.write(("/goStraight/run 70 \r\n").encode())
+                if (not gostr):
+                    uart.write (("/stop/run \n").encode())
+                    time.sleep(1)
+                gostr = True
+        elif (off_axis > 40) :
+            if (line.theta() > 40 and line.theta() < 90) :
+                #if (gostr) :
+                    #print("go straight2")
+                    #uart.write(("/goStraight/run 60 \r\n").encode())
+                    #time.sleep(0.5)
+                gostr = False
+                print("turn right2")
+                uart.write(("/turn/run 80 -0.5 \r\n").encode())
+            elif (line.theta() < 140 and line.theta() > 90) :
+                #if (gostr) :
+                    #print("go straight3")
+                    #uart.write(("/goStraight/run 60 \r\n").encode())
+                    #time.sleep(1)
+                gostr = False
+                print("turn left3")
+                uart.write(("/turn/run 80 0.5\r\n").encode())
             else :
                 print("turn left4")
-                uart.write(("/turn/run 50 \r\n").encode())
-        elif (off_axis < -30) :
-            if (line.theta() > 50 and line.theta() < 90) :
-                print("go straight5")
-                uart.write(("/goStraight/run 60 \r\n").encode())
-                time.sleep(0.5)
+                uart.write(("/turn/run 60 0.5\r\n").encode())
+        elif (off_axis < -40) :
+            if (line.theta() > 40 and line.theta() < 90) :
+                #if (gostr) :
+                    #print("go straight5")
+                    #uart.write(("/goStraight/run 60 \r\n").encode())
+                    #time.sleep(0.5)
+                gostr = False
                 print("turn right5")
-                uart.write(("/turn/run -50 \r\n").encode())
-            elif (line.theta() < 130 and line.theta() > 90) :
-                print("go straight6")
-                uart.write(("/goStraight/run 60 \r\n").encode())
-                time.sleep(1)
+                uart.write(("/turn/run 80 -0.5 \r\n").encode())
+            elif (line.theta() < 140 and line.theta() > 90) :
+                #if (gostr) :
+                    #print("go straight6")
+                    #uart.write(("/goStraight/run 60 \r\n").encode())
+                    #time.sleep(1)
+                gostr = False
                 print("turn left6")
-                uart.write(("/turn/run 50 \r\n").encode())
+                uart.write(("/turn/run 80 0.5 \r\n").encode())
             else :
                 print("turn right7")
-                uart.write(("/turn/run -50 \r\n").encode())
+                uart.write(("/turn/run 60 -0.5\r\n").encode())
 
     if ((not find) and (not line)) :
-        time.sleep(1.5)
         uart.write (("/stop/run \n").encode())
 
     print("FPS %f, mag = %s" % (clock.fps(), str(line.magnitude()) if (line) else "N/A"))

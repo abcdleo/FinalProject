@@ -14,12 +14,12 @@ Thread thread_uart;
 Thread thread_Xbee;
 
 void func_uart();
-void func_Xbee();
+// void func_Xbee();
 
 int main() {
 
     thread_uart.start(&func_uart);
-    thread_Xbee.start(&func_Xbee);
+    // thread_Xbee.start(&func_Xbee);
 
     return 0;
 }
@@ -30,6 +30,10 @@ void func_uart(){
     FILE *devout = fdopen(&uart, "w");
     uart.set_baud(9600);
 
+    // FILE *devin = fdopen(&Xbee, "r");
+    // FILE *devout = fdopen(&Xbee, "w");
+    Xbee.set_baud(9600);
+
     while (1) {
         memset(buf, 0, 256);
         for( int i = 0; ; i++ ) {
@@ -39,6 +43,9 @@ void func_uart(){
                 printf("\r\n");
                 break;
             }
+            else if (recv == 'z'){
+                Xbee.write("april tag calibrate success! \r\n", 32);
+            }
             buf[i] = fputc(recv, devout);
         }
         // printf ("\n");              // test only 
@@ -46,11 +53,12 @@ void func_uart(){
     }
 }
 
+/*
 void func_Xbee(){
     char buf[256], outbuf[256];
     FILE *devin = fdopen(&Xbee, "r");
     FILE *devout = fdopen(&Xbee, "w");
-    uart.set_baud(9600);
+    Xbee.set_baud(9600);
 
     while (1) {
         memset(buf, 0, 256);
@@ -67,3 +75,4 @@ void func_Xbee(){
         RPC::call(buf, outbuf);
     }
 }
+*/

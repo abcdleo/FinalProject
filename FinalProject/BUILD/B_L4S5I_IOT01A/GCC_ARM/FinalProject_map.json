@@ -13,7 +13,7 @@
     {
         "module": "BUILD/B_L4S5I_IOT01A",
         "size": {
-            ".text": 3026,
+            ".text": 2926,
             ".data": 16,
             ".bss": 3032,
             ".text-delta": 0,
@@ -24,7 +24,7 @@
     {
         "module": "[fill]",
         "size": {
-            ".text": 176,
+            ".text": 148,
             ".data": 6,
             ".bss": 33,
             ".text-delta": 0,
@@ -69,7 +69,7 @@
         "summary": {
             "static_ram": 14216,
             "static_ram_delta": 0,
-            "total_flash": 84228,
+            "total_flash": 84100,
             "total_flash_delta": 0
         }
     }
