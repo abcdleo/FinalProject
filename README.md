@@ -1,6 +1,6 @@
 # FinalProject
 
-組裝mbed車，openmv TX/RX 接到D0/D1，Xbee TX/RX A1/A0
+組裝BOE BOT car車，openmv TX/RX 接到D0/D1，Xbee TX/RX A1/A0
 
 再將openmv.py放進openmv裡
 
